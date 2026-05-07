@@ -1,0 +1,5 @@
+export const CEO_NAME     = 'Nicole Loeffel'
+export const CEO_TITLE    = 'Group CEO'
+export const CEO_INITIALS = 'NL'
+export const DATA_AS_OF   = 'Today, 07:23'
+export const DATA_PERIOD  = 'MTD'
