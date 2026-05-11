@@ -78,8 +78,9 @@ function DecisionItem({ decision }: { decision: DecisionItem }) {
 }
 
 export function DecisionQueueModule() {
-  const decisions   = useDecisionsStore((s) => s.decisions)
-  const pending     = decisions.filter((d) => d.status === 'pending')
+  const decisionsStore = useDecisionsStore()
+  const decisions      = decisionsStore.allDecisions()
+  const pending        = decisions.filter((d) => d.status === 'pending')
   const hasUrgent   = pending.some((d) => d.priority === 'urgent')
   const borderColor = hasUrgent ? 'border-l-red-600' : pending.some((d) => d.priority === 'high') ? 'border-l-amber-500' : 'border-l-green-600'
   const dotColor    = hasUrgent ? 'bg-red-500' : pending.some((d) => d.priority === 'high') ? 'bg-amber-500' : 'bg-green-500'

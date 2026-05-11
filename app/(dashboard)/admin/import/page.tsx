@@ -1,5 +1,5 @@
-import { ImportWizard } from '@/components/admin/ImportWizard'
+import { WorkbookUploader } from '@/components/admin/WorkbookUploader'
 
 export default function ImportPage() {
-  return <ImportWizard />
+  return <WorkbookUploader />
 }

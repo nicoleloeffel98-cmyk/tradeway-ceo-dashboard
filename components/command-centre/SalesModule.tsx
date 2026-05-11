@@ -7,15 +7,15 @@ import { formatZAR } from '@/lib/utils/format'
 import { CHART_THEME } from '@/lib/constants/design-tokens'
 import { generateInsights } from '@/lib/insights/engine'
 import { useImportStore } from '@/lib/stores/useImportStore'
-import { mergeImportedKPIs } from '@/lib/import/transformers'
+import { mergeSalesKPIs } from '@/lib/workbook/kpiMerger'
 
 const insights = generateInsights()
 
 export function SalesModule() {
-  const importedValues = useImportStore((s) => s.activeImport?.data.sales)
-  const keyKPIs = mergeImportedKPIs(
+  const derived = useImportStore((s) => s.activeImport?.derived.sales)
+  const keyKPIs = mergeSalesKPIs(
     mockSalesKPIs.filter((k) => ['sales-revenue-mtd', 'sales-win-rate', 'sales-forecast'].includes(k.id)),
-    importedValues,
+    derived,
   )
   const insight = insights.sales
 

@@ -7,6 +7,7 @@ import { formatZAR } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { generateInsights } from '@/lib/insights/engine'
 import { useImportStore } from '@/lib/stores/useImportStore'
+import { mergeClientSummary } from '@/lib/workbook/kpiMerger'
 import type { RAGStatus } from '@/lib/types'
 
 const insights = generateInsights()
@@ -38,24 +39,25 @@ const TREND_COLOR: Record<string, string> = {
 }
 
 export function ClientHealthModule() {
-  const importedClients = useImportStore((s) => s.activeImport?.data.clients)
+  const derivedClients = useImportStore((s) => s.activeImport?.derived.clients)
   const npsKPI  = mockExecutiveKPIs.find((k) => k.id === 'client-nps')
   const insight = insights['client-health']
+  const summary = mergeClientSummary(mockClientSummary, derivedClients)
 
-  // Build display clients from imported data or mock
-  const displayClients = importedClients
-    ? importedClients.map((c, i) => ({
-        id:          `imp-${i}`,
-        name:        c.name,
-        sector:      'Imported',
-        arr:         c.arr,
-        nps:         c.nps,
-        churnRisk:   c.churnRisk,
-        renewalDate: new Date(Date.now() + c.daysToRenewal * 86_400_000).toISOString().slice(0, 10),
+  // Build display clients from derived workbook data or mock
+  const displayClients = derivedClients?.clients
+    ? derivedClients.clients.map((c, i) => ({
+        id:            `wb-${i}`,
+        name:          c.name,
+        sector:        c.sector ?? 'Imported',
+        arr:           c.arr,
+        nps:           c.nps,
+        churnRisk:     c.churnRisk,
+        renewalDate:   new Date(Date.now() + c.daysToRenewal * 86_400_000).toISOString().slice(0, 10),
         daysToRenewal: c.daysToRenewal,
-        openIssues:  0,
-        lastContact: new Date().toISOString(),
-        trend:       c.trend,
+        openIssues:    0,
+        lastContact:   c.lastContact ?? new Date().toISOString(),
+        trend:         c.trend,
       }))
     : mockClients
 
@@ -78,17 +80,17 @@ export function ClientHealthModule() {
       <div className="grid grid-cols-2 gap-2 min-[400px]:grid-cols-3">
         <div className="rounded-lg border border-border bg-card/60 p-3">
           <p className="text-[10px] text-muted-foreground">Avg NPS</p>
-          <p className="mt-1 text-2xl font-bold font-mono text-foreground">{mockClientSummary.avgNps.toFixed(1)}</p>
+          <p className="mt-1 text-2xl font-bold font-mono text-foreground">{summary.avgNps.toFixed(1)}</p>
           <p className="text-[10px] text-amber-400 mt-0.5">↓ 0.1 vs last month</p>
         </div>
         <div className="rounded-lg border border-border bg-card/60 p-3">
           <p className="text-[10px] text-muted-foreground">At Risk</p>
-          <p className="mt-1 text-2xl font-bold font-mono text-amber-400">{mockClientSummary.atRisk}</p>
+          <p className="mt-1 text-2xl font-bold font-mono text-amber-400">{summary.atRisk}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">clients</p>
         </div>
         <div className="rounded-lg border border-border bg-card/60 p-3">
           <p className="text-[10px] text-muted-foreground">Renewing &lt;90d</p>
-          <p className="mt-1 text-2xl font-bold font-mono text-amber-400">{mockClientSummary.renewingIn90d}</p>
+          <p className="mt-1 text-2xl font-bold font-mono text-amber-400">{summary.renewingIn90d}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">contract</p>
         </div>
       </div>

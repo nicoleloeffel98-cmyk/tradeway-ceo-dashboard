@@ -79,9 +79,10 @@ function AlertRow({ alert }: { alert: Alert }) {
 }
 
 export function ExecutiveAlertsModule() {
-  const alerts      = useAlertsStore((s) => s.alerts)
-  const unreadCount = useAlertsStore((s) => s.unreadCount())
-  const markAllRead = useAlertsStore((s) => s.markAllRead)
+  const alertsStore = useAlertsStore()
+  const alerts      = alertsStore.allAlerts()
+  const unreadCount = alertsStore.unreadCount()
+  const markAllRead = alertsStore.markAllRead
 
   const criticals = alerts.filter((a) => a.severity === 'critical' && !a.isRead)
   const warnings  = alerts.filter((a) => a.severity === 'warning' && !a.isRead)

@@ -1,22 +1,17 @@
 'use client'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ImportedData } from '@/lib/import/transformers'
+import type { WorkbookImportRecord, DerivedKPIs, ParsedWorkbook } from '@/lib/workbook/types'
 
-export interface ImportRecord {
-  id:         string
-  fileName:   string
-  importedAt: string
-  sheetCount: number
-  domains:    string[]
-  data:       ImportedData
-}
+// Re-export for convenience
+export type { WorkbookImportRecord }
 
 interface ImportStore {
-  activeImport:   ImportRecord | null
-  importHistory:  ImportRecord[]
-  importData:     (record: ImportRecord) => void
-  resetToDemo:    () => void
+  activeImport:   WorkbookImportRecord | null
+  importHistory:  WorkbookImportRecord[]
+
+  importData:      (record: WorkbookImportRecord) => void
+  resetToDemo:     () => void
   hasImportedData: () => boolean
 }
 
@@ -37,7 +32,7 @@ export const useImportStore = create<ImportStore>()(
       hasImportedData: () => get().activeImport !== null,
     }),
     {
-      name: 'tradeway-import',
+      name: 'tradeway-import-v2',
       partialize: (s) => ({
         activeImport:  s.activeImport,
         importHistory: s.importHistory,
@@ -45,3 +40,15 @@ export const useImportStore = create<ImportStore>()(
     },
   ),
 )
+
+// ─── Selector helpers (used by dashboard modules) ─────────────────────────────
+
+/** Get derived KPIs from the active import, or undefined if no import */
+export function useDerivedKPIs(): DerivedKPIs | undefined {
+  return useImportStore((s) => s.activeImport?.derived)
+}
+
+/** Get parsed workbook from the active import, or undefined if no import */
+export function useParsedWorkbook(): ParsedWorkbook | undefined {
+  return useImportStore((s) => s.activeImport?.parsed)
+}

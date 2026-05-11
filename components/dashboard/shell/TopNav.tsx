@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Bell, Database } from 'lucide-react'
-import { useAlertsStore }  from '@/lib/stores/useAlertsStore'
-import { useImportStore }  from '@/lib/stores/useImportStore'
+import { useAlertsStore }    from '@/lib/stores/useAlertsStore'
+import { useDecisionsStore } from '@/lib/stores/useDecisionsStore'
+import { useImportStore }    from '@/lib/stores/useImportStore'
 import { CEO_INITIALS, CEO_NAME, DATA_PERIOD } from '@/lib/constants/ceo'
 import { cn } from '@/lib/utils'
 
@@ -23,11 +24,20 @@ const PAGE_TITLES: Record<string, string> = {
 }
 
 export function TopNav() {
-  const pathname      = usePathname()
-  const unreadCount   = useAlertsStore((s) => s.unreadCount())
-  const hasImport     = useImportStore((s) => s.activeImport !== null)
-  const importRecord  = useImportStore((s) => s.activeImport)
-  const resetToDemo   = useImportStore((s) => s.resetToDemo)
+  const pathname         = usePathname()
+  const alertsStore      = useAlertsStore()
+  const unreadCount      = alertsStore.unreadCount()
+  const clearAlerts      = alertsStore.clearImportedAlerts
+  const clearDecisions   = useDecisionsStore((s) => s.clearImportedDecisions)
+  const hasImport        = useImportStore((s) => s.activeImport !== null)
+  const importRecord     = useImportStore((s) => s.activeImport)
+  const resetImportStore = useImportStore((s) => s.resetToDemo)
+
+  const resetToDemo = () => {
+    resetImportStore()
+    clearAlerts()
+    clearDecisions()
+  }
   const pageTitle     = PAGE_TITLES[pathname] ?? 'Executive Intelligence'
   const [asOf, setAsOf] = useState('')
 

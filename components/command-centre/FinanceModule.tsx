@@ -7,15 +7,15 @@ import { formatZAR } from '@/lib/utils/format'
 import { CHART_THEME } from '@/lib/constants/design-tokens'
 import { generateInsights } from '@/lib/insights/engine'
 import { useImportStore } from '@/lib/stores/useImportStore'
-import { mergeImportedKPIs } from '@/lib/import/transformers'
+import { mergeFinanceKPIs } from '@/lib/workbook/kpiMerger'
 
 const insights = generateInsights()
 
 export function FinanceModule() {
-  const importedValues = useImportStore((s) => s.activeImport?.data.finance)
-  const keyKPIs = mergeImportedKPIs(
-    mockFinanceKPIs.filter((k) => ['fin-cash', 'fin-dso', 'fin-ebitda-margin', 'fin-overdue-ar'].includes(k.id)),
-    importedValues,
+  const derived = useImportStore((s) => s.activeImport?.derived.finance)
+  const keyKPIs = mergeFinanceKPIs(
+    mockFinanceKPIs.filter((k) => ['fin-cash', 'fin-dso', 'fin-gross-margin', 'fin-overdue-ar'].includes(k.id)),
+    derived,
   )
   const insight   = insights.finance
   const recentCF  = mockCashFlow.slice(-5).map((d) => ({

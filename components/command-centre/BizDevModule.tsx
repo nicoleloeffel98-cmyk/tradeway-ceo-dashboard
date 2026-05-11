@@ -6,7 +6,7 @@ import { formatZAR } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { generateInsights } from '@/lib/insights/engine'
 import { useImportStore } from '@/lib/stores/useImportStore'
-import { mergeImportedKPIs } from '@/lib/import/transformers'
+import { mergeBDKPIs } from '@/lib/workbook/kpiMerger'
 
 const insights = generateInsights()
 
@@ -18,10 +18,10 @@ const STAGE_COLORS: Record<string, string> = {
 }
 
 export function BizDevModule() {
-  const importedValues = useImportStore((s) => s.activeImport?.data.bd)
-  const keyKPIs  = mergeImportedKPIs(
+  const derived  = useImportStore((s) => s.activeImport?.derived.bd)
+  const keyKPIs  = mergeBDKPIs(
     mockBDKPIs.filter((k) => ['bd-total-pipeline', 'bd-win-rate', 'bd-open-opportunities'].includes(k.id)),
-    importedValues,
+    derived,
   )
   const topOpps  = mockOpportunities.filter((o) => o.stage === 'negotiation' || o.stage === 'proposal').slice(0, 3)
   const insight  = insights.bizdev
