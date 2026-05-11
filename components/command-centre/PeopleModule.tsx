@@ -11,6 +11,8 @@ import {
 import { cn } from '@/lib/utils'
 import { CHART_THEME } from '@/lib/constants/design-tokens'
 import { generateInsights } from '@/lib/insights/engine'
+import { useImportStore } from '@/lib/stores/useImportStore'
+import { mergeImportedKPIs } from '@/lib/import/transformers'
 import type { RAGStatus } from '@/lib/utils/rag'
 
 const insights = generateInsights()
@@ -23,8 +25,10 @@ const DOT: Record<RAGStatus, string> = {
 }
 
 export function PeopleModule() {
-  const keyKPIs = mockPeopleKPIs.filter((k) =>
-    ['ppl-capacity-util', 'ppl-open-roles', 'ppl-attrition'].includes(k.id),
+  const importedValues = useImportStore((s) => s.activeImport?.data.people)
+  const keyKPIs = mergeImportedKPIs(
+    mockPeopleKPIs.filter((k) => ['ppl-capacity-util', 'ppl-open-roles', 'ppl-attrition'].includes(k.id)),
+    importedValues,
   )
   const insight         = insights.people
   const criticalRoles   = mockOpenVacancies.filter((v) => v.priority === 'critical')

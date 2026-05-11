@@ -1,4 +1,4 @@
-export type NavGroup = 'core' | 'towers' | 'intelligence'
+export type NavGroup = 'core' | 'towers' | 'intelligence' | 'admin'
 
 export interface NavItem {
   id:          string
@@ -19,11 +19,13 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'people',     label: 'People',      href: '/people',     icon: 'Users',           description: 'Capacity & headcount',       group: 'towers' },
   { id: 'campaigns',  label: 'Campaigns',   href: '/campaigns',  icon: 'Megaphone',       description: 'ROI & performance',          group: 'towers' },
   { id: 'strategic',  label: 'Strategic',   href: '/strategic',  icon: 'Compass',         description: 'Forecasts & intelligence',   group: 'intelligence' },
-  { id: 'scorecard',  label: 'Scorecard',   href: '/scorecard',  icon: 'ClipboardCheck',  description: 'Executive scorecard',        group: 'intelligence' },
+  { id: 'scorecard',  label: 'Scorecard',   href: '/scorecard',       icon: 'ClipboardCheck',  description: 'Executive scorecard',        group: 'intelligence' },
+  { id: 'import',     label: 'Import Data', href: '/admin/import',     icon: 'Upload',          description: 'Upload spreadsheet data',    group: 'admin' },
 ]
 
 export const NAV_GROUPS: { key: NavGroup; label: string }[] = [
   { key: 'core',         label: 'Core Executive' },
   { key: 'towers',       label: 'Control Towers' },
   { key: 'intelligence', label: 'Intelligence' },
+  { key: 'admin',        label: 'Data' },
 ]

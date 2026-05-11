@@ -2,28 +2,33 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell } from 'lucide-react'
-import { useAlertsStore } from '@/lib/stores/useAlertsStore'
+import { Bell, Database } from 'lucide-react'
+import { useAlertsStore }  from '@/lib/stores/useAlertsStore'
+import { useImportStore }  from '@/lib/stores/useImportStore'
 import { CEO_INITIALS, CEO_NAME, DATA_PERIOD } from '@/lib/constants/ceo'
 import { cn } from '@/lib/utils'
 
 const PAGE_TITLES: Record<string, string> = {
-  '/':           'CEO Home',
-  '/alerts':     'Executive Alerts',
-  '/bd':         'Business Development',
-  '/sales':      'Sales Control Tower',
-  '/finance':    'Financial Indicators',
-  '/operations': 'Operations Control Tower',
-  '/people':     'People & Capacity',
-  '/campaigns':  'Campaign Performance',
-  '/strategic':  'Strategic Intelligence',
-  '/scorecard':  'Executive Scorecard',
+  '/':               'CEO Home',
+  '/alerts':         'Executive Alerts',
+  '/bd':             'Business Development',
+  '/sales':          'Sales Control Tower',
+  '/finance':        'Financial Indicators',
+  '/operations':     'Operations Control Tower',
+  '/people':         'People & Capacity',
+  '/campaigns':      'Campaign Performance',
+  '/strategic':      'Strategic Intelligence',
+  '/scorecard':      'Executive Scorecard',
+  '/admin/import':   'Import Data',
 }
 
 export function TopNav() {
-  const pathname    = usePathname()
-  const unreadCount = useAlertsStore((s) => s.unreadCount())
-  const pageTitle   = PAGE_TITLES[pathname] ?? 'Executive Intelligence'
+  const pathname      = usePathname()
+  const unreadCount   = useAlertsStore((s) => s.unreadCount())
+  const hasImport     = useImportStore((s) => s.activeImport !== null)
+  const importRecord  = useImportStore((s) => s.activeImport)
+  const resetToDemo   = useImportStore((s) => s.resetToDemo)
+  const pageTitle     = PAGE_TITLES[pathname] ?? 'Executive Intelligence'
   const [asOf, setAsOf] = useState('')
 
   useEffect(() => {
@@ -53,6 +58,24 @@ export function TopNav() {
           <span className="hidden md:block text-[10px] text-muted-foreground/50">
             As of {asOf}
           </span>
+        )}
+        {hasImport && importRecord && (
+          <div className="hidden sm:flex items-center gap-1.5 rounded-md border border-blue-900/50 bg-blue-950/30 px-2.5 py-1">
+            <Database className="size-3 text-blue-400" />
+            <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide">
+              Imported Data
+            </span>
+            <span className="text-[10px] text-muted-foreground/60 hidden lg:block">
+              · {importRecord.fileName}
+            </span>
+            <button
+              onClick={resetToDemo}
+              className="ml-1 text-[9px] font-medium text-muted-foreground/50 hover:text-muted-foreground transition-colors underline"
+              title="Reset to demo data"
+            >
+              Reset
+            </button>
+          </div>
         )}
       </div>
 

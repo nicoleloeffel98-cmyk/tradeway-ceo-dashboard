@@ -6,12 +6,16 @@ import { mockFinanceKPIs, mockCashFlow, mockARAgingBuckets } from '@/lib/data/mo
 import { formatZAR } from '@/lib/utils/format'
 import { CHART_THEME } from '@/lib/constants/design-tokens'
 import { generateInsights } from '@/lib/insights/engine'
+import { useImportStore } from '@/lib/stores/useImportStore'
+import { mergeImportedKPIs } from '@/lib/import/transformers'
 
 const insights = generateInsights()
 
 export function FinanceModule() {
-  const keyKPIs = mockFinanceKPIs.filter((k) =>
-    ['fin-cash', 'fin-dso', 'fin-ebitda-margin', 'fin-overdue-ar'].includes(k.id),
+  const importedValues = useImportStore((s) => s.activeImport?.data.finance)
+  const keyKPIs = mergeImportedKPIs(
+    mockFinanceKPIs.filter((k) => ['fin-cash', 'fin-dso', 'fin-ebitda-margin', 'fin-overdue-ar'].includes(k.id)),
+    importedValues,
   )
   const insight   = insights.finance
   const recentCF  = mockCashFlow.slice(-5).map((d) => ({

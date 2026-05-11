@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Bell, Target, TrendingUp, Landmark,
-  Activity, Users, Megaphone, Compass, ClipboardCheck,
+  Activity, Users, Megaphone, Compass, ClipboardCheck, Upload,
 } from 'lucide-react'
 import { NAV_ITEMS, NAV_GROUPS } from '@/lib/constants/nav'
 import { useAlertsStore } from '@/lib/stores/useAlertsStore'
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 
 const ICONS: Record<string, React.FC<{ className?: string }>> = {
   LayoutDashboard, Bell, Target, TrendingUp, Landmark,
-  Activity, Users, Megaphone, Compass, ClipboardCheck,
+  Activity, Users, Megaphone, Compass, ClipboardCheck, Upload,
 }
 
 export function SidebarNav() {

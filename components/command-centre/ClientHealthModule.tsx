@@ -6,6 +6,7 @@ import { mockExecutiveKPIs } from '@/lib/data/mock-kpis'
 import { formatZAR } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { generateInsights } from '@/lib/insights/engine'
+import { useImportStore } from '@/lib/stores/useImportStore'
 import type { RAGStatus } from '@/lib/types'
 
 const insights = generateInsights()
@@ -37,9 +38,28 @@ const TREND_COLOR: Record<string, string> = {
 }
 
 export function ClientHealthModule() {
-  const npsKPI = mockExecutiveKPIs.find((k) => k.id === 'client-nps')
+  const importedClients = useImportStore((s) => s.activeImport?.data.clients)
+  const npsKPI  = mockExecutiveKPIs.find((k) => k.id === 'client-nps')
   const insight = insights['client-health']
-  const sortedClients = [...mockClients].sort((a, b) => {
+
+  // Build display clients from imported data or mock
+  const displayClients = importedClients
+    ? importedClients.map((c, i) => ({
+        id:          `imp-${i}`,
+        name:        c.name,
+        sector:      'Imported',
+        arr:         c.arr,
+        nps:         c.nps,
+        churnRisk:   c.churnRisk,
+        renewalDate: new Date(Date.now() + c.daysToRenewal * 86_400_000).toISOString().slice(0, 10),
+        daysToRenewal: c.daysToRenewal,
+        openIssues:  0,
+        lastContact: new Date().toISOString(),
+        trend:       c.trend,
+      }))
+    : mockClients
+
+  const sortedClients = [...displayClients].sort((a, b) => {
     const order: Record<RAGStatus, number> = { red: 0, amber: 1, neutral: 2, green: 3 }
     return order[a.churnRisk] - order[b.churnRisk]
   })

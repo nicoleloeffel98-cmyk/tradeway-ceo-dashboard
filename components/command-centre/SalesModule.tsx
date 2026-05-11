@@ -6,12 +6,16 @@ import { mockSalesKPIs, mockSalesForecast, mockSalesReps } from '@/lib/data/mock
 import { formatZAR } from '@/lib/utils/format'
 import { CHART_THEME } from '@/lib/constants/design-tokens'
 import { generateInsights } from '@/lib/insights/engine'
+import { useImportStore } from '@/lib/stores/useImportStore'
+import { mergeImportedKPIs } from '@/lib/import/transformers'
 
 const insights = generateInsights()
 
 export function SalesModule() {
-  const keyKPIs = mockSalesKPIs.filter((k) =>
-    ['sales-revenue-mtd', 'sales-win-rate', 'sales-forecast'].includes(k.id),
+  const importedValues = useImportStore((s) => s.activeImport?.data.sales)
+  const keyKPIs = mergeImportedKPIs(
+    mockSalesKPIs.filter((k) => ['sales-revenue-mtd', 'sales-win-rate', 'sales-forecast'].includes(k.id)),
+    importedValues,
   )
   const insight = insights.sales
 

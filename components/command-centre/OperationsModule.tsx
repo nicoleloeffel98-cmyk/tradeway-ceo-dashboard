@@ -4,6 +4,8 @@ import { KPICard } from '@/components/dashboard/shared/KPICard'
 import { mockOpsKPIs, mockRegionalActivations, mockIncidents } from '@/lib/data/mock-operations'
 import { cn } from '@/lib/utils'
 import { generateInsights } from '@/lib/insights/engine'
+import { useImportStore } from '@/lib/stores/useImportStore'
+import { mergeImportedKPIs, deriveRegionalStatus } from '@/lib/import/transformers'
 import type { RAGStatus } from '@/lib/types'
 
 const insights = generateInsights()
@@ -22,11 +24,22 @@ const SEV_COLOR: Record<string, string> = {
 }
 
 export function OperationsModule() {
-  const keyKPIs  = mockOpsKPIs.filter((k) =>
-    ['ops-activations-mtd', 'ops-no-show-rate', 'ops-success-rate'].includes(k.id),
+  const importedOps   = useImportStore((s) => s.activeImport?.data.operations)
+  const keyKPIs = mergeImportedKPIs(
+    mockOpsKPIs.filter((k) => ['ops-activations-mtd', 'ops-no-show-rate', 'ops-success-rate'].includes(k.id)),
+    importedOps?.kpis,
   )
-  const insight      = insights.operations
-  const topRegions   = mockRegionalActivations.slice(0, 5)
+  const insight    = insights.operations
+  const topRegions = importedOps?.regions
+    ? importedOps.regions.slice(0, 5).map((r) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        region:      r.region as any,
+        activations: r.activations,
+        ambassadors: r.ambassadors,
+        successRate: r.successRate,
+        status:      deriveRegionalStatus(r.successRate),
+      }))
+    : mockRegionalActivations.slice(0, 5)
   const openIncidents = mockIncidents.filter((i) => i.status !== 'resolved').slice(0, 3)
 
   return (
