@@ -1,9 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { RefreshCw, Activity } from 'lucide-react'
+import { RefreshCw, Activity, TrendingUp, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 import { MorningBrief }         from './MorningBrief'
-import { WeeklyChangeBrief }      from './WeeklyChangeBrief'
 import { ExecutiveAlertsModule }  from './ExecutiveAlertsModule'
 import { DecisionQueueModule }    from './DecisionQueueModule'
 import { BizDevModule }           from './BizDevModule'
@@ -14,7 +14,41 @@ import { ClientHealthModule }     from './ClientHealthModule'
 import { PeopleModule }           from './PeopleModule'
 import { ForwardViewModule }      from './ForwardViewModule'
 import { useAlertsStore }         from '@/lib/stores/useAlertsStore'
+import { useTrackerStore }        from '@/lib/stores/useTrackerStore'
 import { CEO_NAME }               from '@/lib/constants/ceo'
+
+function TrackerStatusLine() {
+  const latest = useTrackerStore((s) => s.latest)
+  if (!latest) return null
+
+  const forecastM = (latest.derived.totalForecastGP / 1_000_000).toFixed(1)
+  const targetM   = (latest.derived.annualTarget     / 1_000_000).toFixed(0)
+  const pct       = Math.round(latest.derived.pctToAnnualTarget * 100)
+  const color     = pct >= 80 ? 'text-green-400' : pct >= 60 ? 'text-amber-400' : 'text-red-400'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-center gap-3 rounded-lg border border-[#e8640c]/20 bg-[#e8640c]/5 px-3 py-2"
+    >
+      <TrendingUp className="size-3.5 shrink-0 text-[#e8640c]" />
+      <p className="flex-1 text-[11px] text-muted-foreground">
+        <span className="text-foreground font-medium">Tracker uploaded</span>
+        {' '}· {latest.reportingWeek}
+        {' '}·{' '}
+        <span className={color}>Forecast R{forecastM}M</span>
+        {' '}vs R{targetM}M target ({pct}%)
+      </p>
+      <Link
+        href="#finance"
+        className="flex items-center gap-1 text-[11px] text-[#e8640c] hover:text-[#e8640c]/80 transition-colors shrink-0"
+      >
+        View Finance Tower <ChevronRight className="size-3" />
+      </Link>
+    </motion.div>
+  )
+}
 
 function GlobalStatus() {
   const unread   = useAlertsStore((s) => s.unreadCount())
@@ -40,6 +74,7 @@ function GlobalStatus() {
 export function CommandCentrePage() {
   const [asOf, setAsOf] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const hasTracker = useTrackerStore((s) => s.latest !== null)
 
   useEffect(() => {
     const update = () => {
@@ -91,8 +126,8 @@ export function CommandCentrePage() {
       {/* ── 1. Morning Brief ── */}
       <MorningBrief />
 
-      {/* ── 2. Weekly Change Brief (tracker-aware, WoW comparison) ── */}
-      <WeeklyChangeBrief />
+      {/* ── 2. Compact tracker status line (replaces WeeklyChangeBrief) ── */}
+      <TrackerStatusLine />
 
       {/* ── 3. Executive Alerts (full width) ── */}
       <ExecutiveAlertsModule />
@@ -106,7 +141,9 @@ export function CommandCentrePage() {
         <ClientHealthModule />
         <SalesModule />
         <PeopleModule />
-        <FinanceModule />
+        <div id="finance" className={hasTracker ? 'lg:col-span-2' : ''}>
+          <FinanceModule />
+        </div>
 
         {/* Operations — full width, high operational priority */}
         <div className="lg:col-span-2">
