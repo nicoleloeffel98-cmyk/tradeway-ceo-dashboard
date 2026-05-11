@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { RefreshCw, Activity } from 'lucide-react'
 import { MorningBrief }         from './MorningBrief'
+import { WeeklyChangeBrief }      from './WeeklyChangeBrief'
 import { ExecutiveAlertsModule }  from './ExecutiveAlertsModule'
 import { DecisionQueueModule }    from './DecisionQueueModule'
 import { BizDevModule }           from './BizDevModule'
@@ -90,7 +91,10 @@ export function CommandCentrePage() {
       {/* ── 1. Morning Brief ── */}
       <MorningBrief />
 
-      {/* ── 2. Executive Alerts (full width) ── */}
+      {/* ── 2. Weekly Change Brief (tracker-aware, WoW comparison) ── */}
+      <WeeklyChangeBrief />
+
+      {/* ── 3. Executive Alerts (full width) ── */}
       <ExecutiveAlertsModule />
 
       {/* ── 3. Decision Queue (full width) ── */}

@@ -3,36 +3,71 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { SectionShell } from './SectionShell'
 import { KPICard } from '@/components/dashboard/shared/KPICard'
 import { mockSalesKPIs, mockSalesForecast, mockSalesReps } from '@/lib/data/mock-sales'
-import { formatZAR } from '@/lib/utils/format'
 import { CHART_THEME } from '@/lib/constants/design-tokens'
 import { generateInsights } from '@/lib/insights/engine'
-import { useImportStore } from '@/lib/stores/useImportStore'
-import { mergeSalesKPIs } from '@/lib/workbook/kpiMerger'
+import { useTrackerStore } from '@/lib/stores/useTrackerStore'
+import { cn } from '@/lib/utils'
 
 const insights = generateInsights()
 
 export function SalesModule() {
-  const derived = useImportStore((s) => s.activeImport?.derived.sales)
-  const keyKPIs = mergeSalesKPIs(
-    mockSalesKPIs.filter((k) => ['sales-revenue-mtd', 'sales-win-rate', 'sales-forecast'].includes(k.id)),
-    derived,
-  )
+  const latest  = useTrackerStore((s) => s.latest)
   const insight = insights.sales
 
-  const chartData = mockSalesForecast.map((p) => ({
-    month:    p.month,
-    actual:   p.actual    ? p.actual    / 1_000_000 : undefined,
-    forecast: p.forecast  ? p.forecast  / 1_000_000 : undefined,
-    target:   p.target    / 1_000_000,
-  }))
+  // KPIs: override with tracker data when available
+  const keyKPIs = mockSalesKPIs
+    .filter((k) => ['sales-revenue-mtd', 'sales-win-rate', 'sales-forecast'].includes(k.id))
+    .map((kpi) => {
+      if (!latest) return kpi
+      if (kpi.id === 'sales-revenue-mtd') return { ...kpi, value: latest.derived.totalActualGP }
+      if (kpi.id === 'sales-forecast')    return { ...kpi, value: latest.derived.totalForecastGP }
+      return kpi
+    })
+
+  // Chart: use tracker quarterly data when available
+  const chartData = latest
+    ? (['q1', 'q2', 'q3', 'q4'] as const).map((q, i) => ({
+        month:    ['Q1', 'Q2', 'Q3', 'Q4'][i],
+        actual:   latest.quarterly[q].actual   > 0 ? latest.quarterly[q].actual   / 1_000_000 : undefined,
+        forecast: latest.quarterly[q].forecast > 0 ? latest.quarterly[q].forecast / 1_000_000 : undefined,
+        target:   latest.quarterly[q].budget   / 1_000_000,
+      }))
+    : mockSalesForecast.map((p) => ({
+        month:    p.month,
+        actual:   p.actual   ? p.actual   / 1_000_000 : undefined,
+        forecast: p.forecast ? p.forecast / 1_000_000 : undefined,
+        target:   p.target   / 1_000_000,
+      }))
+
+  // Rep attainment: use tracker data when available
+  const displayReps = latest?.repQuarterly.length
+    ? latest.repQuarterly
+        .filter((r) => r.target > 0)
+        .sort((a, b) => b.pctAchievement - a.pctAchievement)
+        .slice(0, 5)
+        .map((r, i) => ({
+          id:           `trk-${i}`,
+          name:          r.name,
+          attainmentPct: Math.round(r.pctAchievement * 100 * 10) / 10,
+          actual:        r.ytdActual,
+        }))
+    : mockSalesReps.slice(0, 5).map((r) => ({
+        id:           r.id,
+        name:          r.name,
+        attainmentPct: r.attainmentPct,
+        actual:        r.actual,
+      }))
 
   return (
     <SectionShell
-      title="Sales"
-      status="amber"
-      subtitle="Revenue conversion · MTD · forecast"
-      insight={insight.headline}
-      insightAction="Prioritise Vodacom and Shoprite to close month-end gap"
+      title="Sales / GP Performance"
+      status={latest ? (latest.derived.pctToAnnualTarget < 0.5 ? 'amber' : 'green') : 'amber'}
+      subtitle={latest ? `${latest.reportingWeek} · FY target ${(latest.derived.pctToAnnualTarget * 100).toFixed(0)}%` : 'GP · attainment · forecast'}
+      insight={latest
+        ? `YTD GP: R${(latest.derived.totalActualGP / 1_000_000).toFixed(1)}M actual, R${(latest.derived.totalForecastGP / 1_000_000).toFixed(1)}M forecast of R${(latest.derived.annualTarget / 1_000_000).toFixed(0)}M annual target.`
+        : insight.headline
+      }
+      insightAction={latest ? `${latest.derived.atRiskReps.length} reps below 60% — review pipeline conversion` : 'Prioritise Vodacom and Shoprite to close month-end gap'}
       href="/sales"
       delay={0.15}
     >
@@ -43,10 +78,10 @@ export function SalesModule() {
         ))}
       </div>
 
-      {/* Revenue vs target mini chart */}
+      {/* GP vs target chart */}
       <div>
         <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          Revenue vs target (Jan–Jun)
+          {latest ? 'Quarterly GP: actual vs forecast vs target' : 'Revenue vs target (Jan–Jun)'}
         </p>
         <ResponsiveContainer width="100%" height={90}>
           <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
@@ -70,23 +105,29 @@ export function SalesModule() {
         </ResponsiveContainer>
       </div>
 
-      {/* Top reps */}
+      {/* Rep attainment */}
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Rep attainment</p>
-        {mockSalesReps.slice(0, 3).map((rep) => (
-          <div key={rep.id} className="flex items-center gap-2">
-            <p className="w-28 truncate text-[11px] text-muted-foreground">{rep.name.split(' ')[0]} {rep.name.split(' ')[1]?.[0]}.</p>
-            <div className="flex-1 h-1.5 rounded-full bg-card overflow-hidden">
-              <div
-                className={rep.attainmentPct >= 100 ? 'bg-green-600' : rep.attainmentPct >= 85 ? 'bg-amber-500' : 'bg-red-600'}
-                style={{ width: `${Math.min(rep.attainmentPct, 100)}%`, height: '100%', borderRadius: '9999px' }}
-              />
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+          {latest ? 'Rep GP attainment (FY target)' : 'Rep attainment'}
+        </p>
+        {displayReps.map((rep) => {
+          const pctNum = rep.attainmentPct
+          const color  = pctNum >= 100 ? 'bg-green-600' : pctNum >= 80 ? 'bg-amber-500' : 'bg-red-600'
+          const tColor = pctNum >= 100 ? 'text-green-400' : pctNum >= 80 ? 'text-amber-400' : 'text-red-400'
+          return (
+            <div key={rep.id} className="flex items-center gap-2">
+              <p className="w-28 truncate text-[11px] text-muted-foreground">
+                {rep.name.split(' ')[0]} {rep.name.split(' ')[1]?.[0]}.
+              </p>
+              <div className="flex-1 h-1.5 rounded-full bg-card overflow-hidden">
+                <div className={color} style={{ width: `${Math.min(pctNum, 100)}%`, height: '100%', borderRadius: '9999px' }} />
+              </div>
+              <span className={cn('text-[11px] font-mono font-semibold w-12 text-right', tColor)}>
+                {pctNum.toFixed(0)}%
+              </span>
             </div>
-            <span className={`text-[11px] font-mono font-semibold w-10 text-right ${rep.attainmentPct >= 100 ? 'text-green-400' : rep.attainmentPct >= 85 ? 'text-amber-400' : 'text-red-400'}`}>
-              {rep.attainmentPct}%
-            </span>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </SectionShell>
   )

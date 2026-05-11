@@ -5,8 +5,6 @@ import { mockBDKPIs, mockBDFunnel, mockOpportunities } from '@/lib/data/mock-bd'
 import { formatZAR } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { generateInsights } from '@/lib/insights/engine'
-import { useImportStore } from '@/lib/stores/useImportStore'
-import { mergeBDKPIs } from '@/lib/workbook/kpiMerger'
 
 const insights = generateInsights()
 
@@ -18,11 +16,7 @@ const STAGE_COLORS: Record<string, string> = {
 }
 
 export function BizDevModule() {
-  const derived  = useImportStore((s) => s.activeImport?.derived.bd)
-  const keyKPIs  = mergeBDKPIs(
-    mockBDKPIs.filter((k) => ['bd-total-pipeline', 'bd-win-rate', 'bd-open-opportunities'].includes(k.id)),
-    derived,
-  )
+  const keyKPIs  = mockBDKPIs.filter((k) => ['bd-total-pipeline', 'bd-win-rate', 'bd-open-opportunities'].includes(k.id))
   const topOpps  = mockOpportunities.filter((o) => o.stage === 'negotiation' || o.stage === 'proposal').slice(0, 3)
   const insight  = insights.bizdev
   const maxValue = Math.max(...mockBDFunnel.map((s) => s.value))

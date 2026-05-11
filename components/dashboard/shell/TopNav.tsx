@@ -3,9 +3,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Bell, Database } from 'lucide-react'
-import { useAlertsStore }    from '@/lib/stores/useAlertsStore'
-import { useDecisionsStore } from '@/lib/stores/useDecisionsStore'
-import { useImportStore }    from '@/lib/stores/useImportStore'
+import { useAlertsStore }   from '@/lib/stores/useAlertsStore'
+import { useTrackerStore }  from '@/lib/stores/useTrackerStore'
 import { CEO_INITIALS, CEO_NAME, DATA_PERIOD } from '@/lib/constants/ceo'
 import { cn } from '@/lib/utils'
 
@@ -24,20 +23,11 @@ const PAGE_TITLES: Record<string, string> = {
 }
 
 export function TopNav() {
-  const pathname         = usePathname()
-  const alertsStore      = useAlertsStore()
-  const unreadCount      = alertsStore.unreadCount()
-  const clearAlerts      = alertsStore.clearImportedAlerts
-  const clearDecisions   = useDecisionsStore((s) => s.clearImportedDecisions)
-  const hasImport        = useImportStore((s) => s.activeImport !== null)
-  const importRecord     = useImportStore((s) => s.activeImport)
-  const resetImportStore = useImportStore((s) => s.resetToDemo)
-
-  const resetToDemo = () => {
-    resetImportStore()
-    clearAlerts()
-    clearDecisions()
-  }
+  const pathname      = usePathname()
+  const unreadCount   = useAlertsStore((s) => s.unreadCount())
+  const hasTracker    = useTrackerStore((s) => s.latest !== null)
+  const trackerLatest = useTrackerStore((s) => s.latest)
+  const resetTracker  = useTrackerStore((s) => s.resetToDemo)
   const pageTitle     = PAGE_TITLES[pathname] ?? 'Executive Intelligence'
   const [asOf, setAsOf] = useState('')
 
@@ -69,17 +59,17 @@ export function TopNav() {
             As of {asOf}
           </span>
         )}
-        {hasImport && importRecord && (
-          <div className="hidden sm:flex items-center gap-1.5 rounded-md border border-blue-900/50 bg-blue-950/30 px-2.5 py-1">
-            <Database className="size-3 text-blue-400" />
-            <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide">
-              Imported Data
+        {hasTracker && trackerLatest && (
+          <div className="hidden sm:flex items-center gap-1.5 rounded-md border border-[#e8640c]/40 bg-[#e8640c]/5 px-2.5 py-1">
+            <Database className="size-3 text-[#e8640c]" />
+            <span className="text-[10px] font-semibold text-[#e8640c] uppercase tracking-wide">
+              Live Tracker
             </span>
             <span className="text-[10px] text-muted-foreground/60 hidden lg:block">
-              · {importRecord.fileName}
+              · {trackerLatest.reportingDate}
             </span>
             <button
-              onClick={resetToDemo}
+              onClick={resetTracker}
               className="ml-1 text-[9px] font-medium text-muted-foreground/50 hover:text-muted-foreground transition-colors underline"
               title="Reset to demo data"
             >

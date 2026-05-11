@@ -6,17 +6,23 @@ import { mockFinanceKPIs, mockCashFlow, mockARAgingBuckets } from '@/lib/data/mo
 import { formatZAR } from '@/lib/utils/format'
 import { CHART_THEME } from '@/lib/constants/design-tokens'
 import { generateInsights } from '@/lib/insights/engine'
-import { useImportStore } from '@/lib/stores/useImportStore'
-import { mergeFinanceKPIs } from '@/lib/workbook/kpiMerger'
+import { useTrackerStore } from '@/lib/stores/useTrackerStore'
 
 const insights = generateInsights()
 
 export function FinanceModule() {
-  const derived = useImportStore((s) => s.activeImport?.derived.finance)
-  const keyKPIs = mergeFinanceKPIs(
-    mockFinanceKPIs.filter((k) => ['fin-cash', 'fin-dso', 'fin-gross-margin', 'fin-overdue-ar'].includes(k.id)),
-    derived,
-  )
+  const latest  = useTrackerStore((s) => s.latest)
+  // Override GP-related finance KPIs from tracker if available
+  const keyKPIs = mockFinanceKPIs
+    .filter((k) => ['fin-cash', 'fin-dso', 'fin-gross-margin', 'fin-overdue-ar'].includes(k.id))
+    .map((kpi) => {
+      if (!latest) return kpi
+      // fin-gross-margin can be approximated from forecast/annual target
+      if (kpi.id === 'fin-gross-margin') {
+        return { ...kpi, value: Math.round(latest.derived.pctToAnnualTarget * 100 * 10) / 10 }
+      }
+      return kpi
+    })
   const insight   = insights.finance
   const recentCF  = mockCashFlow.slice(-5).map((d) => ({
     month:   d.month.replace('-26', '').replace('-25', ''),
